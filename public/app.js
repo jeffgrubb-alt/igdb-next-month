@@ -1,10 +1,14 @@
 // public/app.js
 
+// Global state
+let currentMode = 'month'; // "month" or "30days"
+
 // Fetch releases for a given mode: "month" (next calendar month) or "30days" (next 30 days)
 async function fetchReleases(mode = 'month') {
   const statusEl = document.getElementById('status');
   const tableEl = document.getElementById('gamesTable');
 
+  currentMode = mode;
   statusEl.textContent = 'Loading…';
 
   try {
@@ -14,18 +18,65 @@ async function fetchReleases(mode = 'month') {
     if (!Array.isArray(data) || data.length === 0) {
       statusEl.textContent = 'No games found.';
       tableEl.style.display = 'none';
+      window.__allGames = [];
       return;
     }
 
     window.__allGames = data;
 
-    renderTable(data);
-    statusEl.textContent = `Showing ${data.length} games. (${mode === '30days' ? 'Next 30 days' : 'Next calendar month'})`;
+    applyFilters(); // renders and updates status
     tableEl.style.display = 'table';
   } catch (err) {
     console.error(err);
     statusEl.textContent = 'Failed to load data.';
     tableEl.style.display = 'none';
+    window.__allGames = [];
+  }
+}
+
+// Apply platform checkboxes + text filter
+function applyFilters() {
+  const all = window.__allGames || [];
+  const statusEl = document.getElementById('status');
+  const platformInput = document.getElementById('platformFilter');
+  const textQuery = (platformInput.value || '').trim().toLowerCase();
+
+  // Collect checked platform tokens
+  const checks = document.querySelectorAll('.platform-check');
+  const activeTokens = [];
+  checks.forEach(cb => {
+    if (cb.checked && cb.dataset.token) {
+      activeTokens.push(cb.dataset.token.toLowerCase());
+    }
+  });
+
+  let filtered = all;
+
+  // Filter by platform checkboxes first (if any are selected)
+  if (activeTokens.length > 0) {
+    filtered = filtered.filter(game => {
+      const p = (game.platforms || '').toLowerCase();
+      return activeTokens.some(token => p.includes(token));
+    });
+  }
+
+  // Then apply free-text platform filter (optional)
+  if (textQuery) {
+    filtered = filtered.filter(game => {
+      const p = (game.platforms || '').toLowerCase();
+      return p.includes(textQuery);
+    });
+  }
+
+  renderTable(filtered);
+
+  const rangeLabel = currentMode === '30days' ? 'Next 30 days' : 'Next calendar month';
+
+  if (filtered.length === all.length && !textQuery && activeTokens.length === 0) {
+    statusEl.textContent = `Showing ${filtered.length} games. (${rangeLabel})`;
+  } else {
+    statusEl.textContent =
+      `Showing ${filtered.length} of ${all.length} games. (${rangeLabel}, filters active)`;
   }
 }
 
@@ -93,19 +144,16 @@ function renderTable(games) {
 function setupFilter() {
   const input = document.getElementById('platformFilter');
   input.addEventListener('input', () => {
-    const q = input.value.trim().toLowerCase();
-    const all = window.__allGames || [];
+    applyFilters();
+  });
+}
 
-    if (!q) {
-      renderTable(all);
-      return;
-    }
-
-    const filtered = all.filter(g =>
-      (g.platforms || '').toLowerCase().includes(q)
-    );
-
-    renderTable(filtered);
+function setupPlatformFilters() {
+  const checks = document.querySelectorAll('.platform-check');
+  checks.forEach(cb => {
+    cb.addEventListener('change', () => {
+      applyFilters();
+    });
   });
 }
 
@@ -117,8 +165,10 @@ function setupModeSwitcher() {
     radio.addEventListener('change', () => {
       const selected = document.querySelector('input[name="mode"]:checked').value;
 
-      // Optional: clear filter when switching mode
+      // Optional: clear filters when switching mode
       platformInput.value = '';
+      const checks = document.querySelectorAll('.platform-check');
+      checks.forEach(cb => (cb.checked = false));
 
       fetchReleases(selected);
     });
@@ -127,6 +177,7 @@ function setupModeSwitcher() {
 
 document.addEventListener('DOMContentLoaded', () => {
   setupFilter();
+  setupPlatformFilters();
   setupModeSwitcher();
   fetchReleases('month'); // default mode
 });

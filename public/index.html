@@ -66,20 +66,35 @@
   <h1>Upcoming Games – Next Month</h1>
   <p id="subtitle">Data via IGDB. Showing releases for the next calendar month from today.</p>
 
-  <div id="controls">
-    <label for="platformFilter">Filter by platform (e.g. PC, PS5, Switch):</label>
-    <input id="platformFilter" type="text" placeholder="Leave blank to show all" />
+<div id="controls">
+  <div style="margin-bottom: 0.5rem;">
+    <label for="platformFilter">Filter by platform text (optional):</label>
+    <input id="platformFilter" type="text" placeholder="e.g. PC, PS5, Switch" />
   </div>
-<div id="modeControls" style="margin-bottom: 1rem; font-size: 0.9rem;">
-  <span style="margin-right: 0.5rem;">Range:</span>
-  <label style="margin-right: 0.5rem;">
-    <input type="radio" name="mode" value="month" checked />
-    Next calendar month
-  </label>
-  <label>
-    <input type="radio" name="mode" value="30days" />
-    Next 30 days
-  </label>
+
+  <div id="platformControls" style="font-size: 0.9rem;">
+    <span style="margin-right: 0.5rem;">Quick platforms:</span>
+    <label style="margin-right: 0.5rem;">
+      <input type="checkbox" class="platform-check" data-token="pc" />
+      PC
+    </label>
+    <label style="margin-right: 0.5rem;">
+      <input type="checkbox" class="platform-check" data-token="ps5" />
+      PS5
+    </label>
+    <label style="margin-right: 0.5rem;">
+      <input type="checkbox" class="platform-check" data-token="ps4" />
+      PS4
+    </label>
+    <label style="margin-right: 0.5rem;">
+      <input type="checkbox" class="platform-check" data-token="xbox" />
+      Xbox
+    </label>
+    <label style="margin-right: 0.5rem;">
+      <input type="checkbox" class="platform-check" data-token="switch" />
+      Switch
+    </label>
+  </div>
 </div>
 
   <div id="status">Loading…</div>
