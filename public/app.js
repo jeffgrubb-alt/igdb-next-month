@@ -125,11 +125,23 @@ function renderTable(games) {
     }
     tr.appendChild(coverCell);
 
-    // 3) Game name cell
-    const nameCell = document.createElement('td');
-    nameCell.textContent = game.name;
-    nameCell.className = 'game-name';
-    tr.appendChild(nameCell);
+    // 3) Game name cell with "Show details" link to IGDB
+const nameCell = document.createElement('td');
+nameCell.className = 'game-name';
+
+if (game.slug) {
+  const link = document.createElement('a');
+  link.href = `https://www.igdb.com/games/${game.slug}`;
+  link.textContent = game.name;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  nameCell.appendChild(link);
+} else {
+  // Fallback if somehow slug is missing
+  nameCell.textContent = game.name;
+}
+
+tr.appendChild(nameCell);
 
     // 4) Platforms cell
     const platformCell = document.createElement('td');
