@@ -12,6 +12,7 @@ async function fetchReleases() {
 
     if (!Array.isArray(data) || data.length === 0) {
       statusEl.textContent = 'No games found.';
+      tableEl.style.display = 'none';
       return;
     }
 
@@ -20,10 +21,10 @@ async function fetchReleases() {
     renderTable(data);
     statusEl.textContent = `Showing ${data.length} games.`;
     tableEl.style.display = 'table';
-
   } catch (err) {
     console.error(err);
     statusEl.textContent = 'Failed to load data.';
+    tableEl.style.display = 'none';
   }
 }
 
@@ -34,6 +35,7 @@ function renderTable(games) {
   let currentDate = null;
 
   for (const game of games) {
+    // Date-header row when the date changes
     if (game.date !== currentDate) {
       currentDate = game.date;
 
@@ -41,7 +43,8 @@ function renderTable(games) {
       dr.className = 'date-row';
 
       const td = document.createElement('td');
-      td.colSpan = 3;
+      // 4 columns now: Date, Cover, Game, Platforms
+      td.colSpan = 4;
       td.textContent = game.humanDate;
 
       dr.appendChild(td);
@@ -50,16 +53,36 @@ function renderTable(games) {
 
     const tr = document.createElement('tr');
 
+    // 1) Date cell (blank, since date is in the header row)
     const dateCell = document.createElement('td');
     dateCell.textContent = '';
     tr.appendChild(dateCell);
 
+    // 2) Cover cell
+    const coverCell = document.createElement('td');
+    if (game.coverUrl) {
+      const img = document.createElement('img');
+      img.src = game.coverUrl;
+      img.alt = `${game.name} cover`;
+      img.style.maxWidth = '60px';
+      img.style.borderRadius = '4px';
+      img.loading = 'lazy';
+      coverCell.appendChild(img);
+    } else {
+      coverCell.textContent = '—';
+    }
+    tr.appendChild(coverCell);
+
+    // 3) Game name cell
     const nameCell = document.createElement('td');
     nameCell.textContent = game.name;
+    nameCell.className = 'game-name';
     tr.appendChild(nameCell);
 
+    // 4) Platforms cell
     const platformCell = document.createElement('td');
     platformCell.textContent = game.platforms;
+    platformCell.className = 'platforms';
     tr.appendChild(platformCell);
 
     tbody.appendChild(tr);
@@ -72,10 +95,13 @@ function setupFilter() {
     const q = input.value.trim().toLowerCase();
     const all = window.__allGames || [];
 
-    if (!q) return renderTable(all);
+    if (!q) {
+      renderTable(all);
+      return;
+    }
 
     const filtered = all.filter(g =>
-      g.platforms.toLowerCase().includes(q)
+      (g.platforms || '').toLowerCase().includes(q)
     );
 
     renderTable(filtered);
