@@ -32,7 +32,7 @@ async function getAccessToken() {
 }
 
 // "Next calendar month" date range
-function getDateRangeUnixForNextMonth() {
+function getDateRangeNextCalendarMonth() {
   const now = new Date();
 
   const startOfNextMonth = new Date(
@@ -52,14 +52,40 @@ function getDateRangeUnixForNextMonth() {
   const fromUnix = Math.floor(startOfNextMonth.getTime() / 1000);
   const toUnix = Math.floor(startOfFollowingMonth.getTime() / 1000);
 
-  return { fromUnix, toUnix, startOfNextMonth, startOfFollowingMonth };
+  return {
+    fromUnix,
+    toUnix,
+    rangeLabel: `Next calendar month: ${startOfNextMonth.toDateString()} – ${startOfFollowingMonth.toDateString()}`,
+  };
 }
 
-async function fetchUpcomingGamesRaw(accessToken) {
-  const { fromUnix, toUnix, startOfNextMonth, startOfFollowingMonth } =
-    getDateRangeUnixForNextMonth();
+function getDateRangeNextNDays(days) {
+  const now = new Date();
+  const end = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
-  console.log('Querying games from', startOfNextMonth, 'to', startOfFollowingMonth);
+  const fromUnix = Math.floor(now.getTime() / 1000);
+  const toUnix = Math.floor(end.getTime() / 1000);
+
+  return {
+    fromUnix,
+    toUnix,
+    rangeLabel: `Next ${days} days: ${now.toDateString()} – ${end.toDateString()}`,
+  };
+}
+
+function getDateRangeForMode(mode) {
+  if (mode === '30days') {
+    return getDateRangeNextNDays(30);
+  }
+  // default: next calendar month
+  return getDateRangeNextCalendarMonth();
+}
+
+
+async function fetchUpcomingGamesRaw(accessToken, mode) {
+  const { fromUnix, toUnix, rangeLabel } = getDateRangeForMode(mode);
+
+  console.log(`Querying games (mode=${mode}) from range: ${rangeLabel}`);
 
   const body = `
     fields
@@ -96,6 +122,7 @@ async function fetchUpcomingGamesRaw(accessToken) {
   const games = await res.json();
   return games;
 }
+
 
 // Transform IGDB response into a flat, UI-friendly array
 function transformGamesForUi(games) {
@@ -149,8 +176,10 @@ function transformGamesForUi(games) {
 // GET /api/releases/next-month -> JSON array of games
 app.get('/api/releases/next-month', async (req, res) => {
   try {
+    const mode = req.query.mode === '30days' ? '30days' : 'month';
+
     const token = await getAccessToken();
-    const rawGames = await fetchUpcomingGamesRaw(token);
+    const rawGames = await fetchUpcomingGamesRaw(token, mode);
     const rows = transformGamesForUi(rawGames);
     res.json(rows);
   } catch (err) {

@@ -1,13 +1,13 @@
 // public/app.js
 
-async function fetchReleases() {
+async function fetchReleases(mode = 'month') {
   const statusEl = document.getElementById('status');
   const tableEl = document.getElementById('gamesTable');
 
   statusEl.textContent = 'Loading…';
 
   try {
-    const res = await fetch('/api/releases/next-month');
+    const res = await fetch(`/api/releases/next-month?mode=${encodeURIComponent(mode)}`);
     const data = await res.json();
 
     if (!Array.isArray(data) || data.length === 0) {
@@ -25,8 +25,6 @@ async function fetchReleases() {
     console.error(err);
     statusEl.textContent = 'Failed to load data.';
     tableEl.style.display = 'none';
-  }
-}
 
 function renderTable(games) {
   const tbody = document.getElementById('gamesBody');
@@ -107,8 +105,26 @@ function setupFilter() {
     renderTable(filtered);
   });
 }
+function setupModeSwitcher() {
+  const radios = document.querySelectorAll('input[name="mode"]');
+  const platformInput = document.getElementById('platformFilter');
+
+  radios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      const selected = document.querySelector('input[name="mode"]:checked').value;
+
+      // Clear the platform filter when switching modes (optional)
+      platformInput.value = '';
+
+      // Fetch new data for the selected mode
+      fetchReleases(selected);
+    });
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   setupFilter();
-  fetchReleases();
+  setupModeSwitcher();
+  fetchReleases('month'); // default view
 });
+
