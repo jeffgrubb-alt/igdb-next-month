@@ -120,12 +120,21 @@ function transformGamesForUi(games) {
           .join(', ')
       : 'Unknown';
 
+    // Build a cover URL if IGDB provided an image_id
+    // Fallback to null if there's no cover.
+    let coverUrl = null;
+    if (game.cover && game.cover.image_id) {
+      // t_cover_big is a nice medium-large size; can tweak later.
+      coverUrl = `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`;
+    }
+
     rows.push({
       date: isoDate,
       humanDate,
       name: game.name,
       slug: game.slug,
       platforms,
+      coverUrl,
     });
   }
 
@@ -133,6 +142,7 @@ function transformGamesForUi(games) {
 
   return rows;
 }
+
 
 // ---------- API route ----------
 
