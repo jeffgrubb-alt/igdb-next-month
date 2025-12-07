@@ -1,5 +1,6 @@
 // public/app.js
 
+// Fetch releases for a given mode: "month" (next calendar month) or "30days" (next 30 days)
 async function fetchReleases(mode = 'month') {
   const statusEl = document.getElementById('status');
   const tableEl = document.getElementById('gamesTable');
@@ -19,12 +20,14 @@ async function fetchReleases(mode = 'month') {
     window.__allGames = data;
 
     renderTable(data);
-    statusEl.textContent = `Showing ${data.length} games.`;
+    statusEl.textContent = `Showing ${data.length} games. (${mode === '30days' ? 'Next 30 days' : 'Next calendar month'})`;
     tableEl.style.display = 'table';
   } catch (err) {
     console.error(err);
     statusEl.textContent = 'Failed to load data.';
     tableEl.style.display = 'none';
+  }
+}
 
 function renderTable(games) {
   const tbody = document.getElementById('gamesBody');
@@ -33,7 +36,7 @@ function renderTable(games) {
   let currentDate = null;
 
   for (const game of games) {
-    // Date-header row when the date changes
+    // Date header row when the date changes
     if (game.date !== currentDate) {
       currentDate = game.date;
 
@@ -41,7 +44,7 @@ function renderTable(games) {
       dr.className = 'date-row';
 
       const td = document.createElement('td');
-      // 4 columns now: Date, Cover, Game, Platforms
+      // 4 columns: Date, Cover, Game, Platforms
       td.colSpan = 4;
       td.textContent = game.humanDate;
 
@@ -51,7 +54,7 @@ function renderTable(games) {
 
     const tr = document.createElement('tr');
 
-    // 1) Date cell (blank, since date is in the header row)
+    // 1) Date cell (blank, date is in header row)
     const dateCell = document.createElement('td');
     dateCell.textContent = '';
     tr.appendChild(dateCell);
@@ -105,6 +108,7 @@ function setupFilter() {
     renderTable(filtered);
   });
 }
+
 function setupModeSwitcher() {
   const radios = document.querySelectorAll('input[name="mode"]');
   const platformInput = document.getElementById('platformFilter');
@@ -113,10 +117,9 @@ function setupModeSwitcher() {
     radio.addEventListener('change', () => {
       const selected = document.querySelector('input[name="mode"]:checked').value;
 
-      // Clear the platform filter when switching modes (optional)
+      // Optional: clear filter when switching mode
       platformInput.value = '';
 
-      // Fetch new data for the selected mode
       fetchReleases(selected);
     });
   });
@@ -125,6 +128,5 @@ function setupModeSwitcher() {
 document.addEventListener('DOMContentLoaded', () => {
   setupFilter();
   setupModeSwitcher();
-  fetchReleases('month'); // default view
+  fetchReleases('month'); // default mode
 });
-
